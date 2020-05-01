@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=C:/Users/Tobiasz/Desktop/PTM - projekt/project/rc_drive/Inc
+HeaderPath=C:/Users/Tobiasz/Desktop/PTM - projekt/git_project/P47/rc_drive/Inc
 HeaderFiles=stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;
-SourcePath=C:/Users/Tobiasz/Desktop/PTM - projekt/project/rc_drive/Src
+SourcePath=C:/Users/Tobiasz/Desktop/PTM - projekt/git_project/P47/rc_drive/Src
 SourceFiles=stm32f4xx_it.c;stm32f4xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]
