@@ -65,6 +65,7 @@ static void MX_GPIO_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == USART3)
@@ -82,19 +83,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-	{
-	 TIM4->CCR1=9400;
-	 TIM4->CCR2=0;
-	 TIM4->CCR3=9400;
-	 TIM4->CCR4=0;
-	 /*
-	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
-	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
-	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
-	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
-	 */
-	}
+	 if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+	 {
+
+		 TIM4->CCR1=0; //RIGHT REAR WHEEL
+		 TIM4->CCR2=0; //LEFT REAR WHEEL
+		 TIM4->CCR3=0; //RIGHT FRONT WHEEL
+		 TIM4->CCR4=0; //LEFT FRONT WHEEL
+
+	 }
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
