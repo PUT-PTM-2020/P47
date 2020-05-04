@@ -49,10 +49,10 @@ UART_HandleTypeDef huart3;
 /* USER CODE BEGIN PV */
 
 int8_t USART_Buffer[8][32];
-uint8_t usart_buf_in[8];//unit16_t is wrong pointer for transmitAndRecive?
+uint8_t usart_buf_in[1];//unit16_t is wrong pointer for transmitAndRecive?
 uint8_t usart_buf_out[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t sizeSendUART = 8;
-uint16_t sizeReceiveUART = 8;
+uint16_t sizeReceiveUART = 1;
 
 uint8_t AT_command[4] = {'T','E', 'S', 'T'}; //unit16_t is wrong pointer for transmitAndRecive?
 uint16_t AT_size = 4;
@@ -70,14 +70,26 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == USART3)
 	{
-	 TIM4->CCR1=9400;
-	 TIM4->CCR2=9400;
-	 TIM4->CCR3=9400;
-	 TIM4->CCR4=9400;
-	 HAL_UART_Receive_IT(&huart3, usart_buf_in, sizeReceiveUART);
-	 //HAL_UART_Transmit_IT(&huart3, usart_buf_in, sizeReceiveUART);
+		if(usart_buf_in[0]=='F')
+		{
+			TIM4->CCR1=0;
+			TIM4->CCR2=0;
+			TIM4->CCR3=9400; //RIGHT FRONT WHEEL
+			TIM4->CCR4=9400; //LEFT FRONT WHEEL
+		}
+		HAL_UART_Receive_IT(&huart3, usart_buf_in, sizeReceiveUART);
+		//HAL_UART_Transmit_IT(&huart3, usart_buf_in, sizeReceiveUART);
+		memset(usart_buf_in, 0, sizeof(usart_buf_in));
+		for(int i=0; i<1500000; i++)
+		{}
+		if(usart_buf_in[0]=='\0')
+		{
+			 TIM4->CCR1=0;
+			 TIM4->CCR2=0;
+			 TIM4->CCR3=0;
+			 TIM4->CCR4=0;
+		}
 
-	 memset(usart_buf_in, 0, sizeof(usart_buf_in));
 	}
 }
 
@@ -173,6 +185,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
