@@ -20,7 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -65,22 +65,25 @@ static void MX_GPIO_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
- if(huart->Instance == USART3)
- {
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART3)
+	{
 	 TIM4->CCR1=9400;
 	 TIM4->CCR2=9400;
 	 TIM4->CCR3=9400;
 	 TIM4->CCR4=9400;
 	 HAL_UART_Receive_IT(&huart3, usart_buf_in, sizeReceiveUART);
-	 HAL_UART_Transmit_IT(&huart3, usart_buf_in, sizeReceiveUART);
- }
+	 //HAL_UART_Transmit_IT(&huart3, usart_buf_in, sizeReceiveUART);
+
+	 memset(usart_buf_in, 0, sizeof(usart_buf_in));
+	}
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
- if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
- {
+	if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+	{
 	 TIM4->CCR1=9400;
 	 TIM4->CCR2=0;
 	 TIM4->CCR3=9400;
@@ -91,30 +94,30 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
 	 */
- }
-
+	}
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
- if(htim->Instance == TIM4)
- {
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM4)
+	{
 	 /*
-	 	if(TIM4->CCR1>=9400)
-	 	{
-	 		TIM4->CCR1=9400;
-	 		TIM4->CCR2=9400;
-	 		TIM4->CCR3=9400;
-	 		TIM4->CCR4=9400;
-	 	}
-	 	else
-	 	{
-	 		TIM4->CCR1+=5;
-	 		TIM4->CCR2+=5;
-	 		TIM4->CCR3+=5;
-	 		TIM4->CCR4+=5;
-	 	}
-	 	*/
- }
+		if(TIM4->CCR1>=9400)
+		{
+			TIM4->CCR1=9400;
+			TIM4->CCR2=9400;
+			TIM4->CCR3=9400;
+			TIM4->CCR4=9400;
+		}
+		else
+		{
+			TIM4->CCR1+=5;
+			TIM4->CCR2+=5;
+			TIM4->CCR3+=5;
+			TIM4->CCR4+=5;
+		}
+		*/
+	}
 }
 
 
