@@ -96,6 +96,30 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			TIM3->CCR3=9400; //RIGHT FRONT WHEEL
 			TIM3->CCR4=9400; //LEFT FRONT WHEEL
 		}
+		else if(usart_buf_in[0]=='R')
+		{
+			TIM4->CCR1=0;
+			TIM4->CCR2=9400;
+			TIM4->CCR3=0; //RIGHT FRONT WHEEL
+			TIM4->CCR4=9400; //LEFT FRONT WHEEL
+
+			TIM3->CCR1=9400;
+			TIM3->CCR2=0;
+			TIM3->CCR3=9400; //RIGHT FRONT WHEEL
+			TIM3->CCR4=0; //LEFT FRONT WHEEL
+		}
+		else if(usart_buf_in[0]=='L')
+		{
+			TIM4->CCR1=9400;
+			TIM4->CCR2=0;
+			TIM4->CCR3=9400; //RIGHT FRONT WHEEL
+			TIM4->CCR4=0; //LEFT FRONT WHEEL
+
+			TIM3->CCR1=0;
+			TIM3->CCR2=9400;
+			TIM3->CCR3=0; //RIGHT FRONT WHEEL
+			TIM3->CCR4=9400; //LEFT FRONT WHEEL
+		}
 
 		HAL_UART_Receive_IT(&huart3, usart_buf_in, sizeReceiveUART);
 		//HAL_UART_Transmit_IT(&huart3, usart_buf_in, sizeReceiveUART);
