@@ -19,14 +19,18 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <string.h>
 #include "main.h"
-#include "common.h"
-#include "ov9655/ov9655.h"
-#include "ov9655/ov9655Config.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
+#include <stdio.h>
+
+#include "common.h"
+#include "ov9655/ov9655.h"
+#include "ov9655/ov9655Config.h"
+#include "hcsr04.h"
+
 
 /* USER CODE END Includes */
 
@@ -54,6 +58,7 @@ I2C_HandleTypeDef hi2c2;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim9;
 
 UART_HandleTypeDef huart3;
 
@@ -68,6 +73,13 @@ uint16_t sizeReceiveUART = 1;
 uint8_t AT_command[4] = {'T','E', 'S', 'T'}; //unit16_t is wrong pointer for transmitAndRecive?
 uint16_t AT_size = 4;
 
+//HC-SR04
+char distance_buf[10];
+uint8_t distance_len;
+uint16_t distance;
+//float distance;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,6 +92,7 @@ static void MX_DCMI_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_TIM9_Init(void);
 /* USER CODE BEGIN PFP */
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -93,7 +106,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			TIM4->CCR3=9400; //RIGHT FRONT WHEEL
 			TIM4->CCR4=9400; //LEFT FRONT WHEEL
 
-			TIM2->CCR1=0;
+			TIM9->CCR1=0;
 			TIM3->CCR2=0;
 			TIM3->CCR3=0; //RIGHT FRONT WHEEL
 			TIM3->CCR4=0; //LEFT FRONT WHEEL
@@ -105,7 +118,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			TIM4->CCR3=0;
 			TIM4->CCR4=0;
 
-			TIM2->CCR1=9400;
+			TIM9->CCR1=9400;
 			TIM3->CCR2=9400;
 			TIM3->CCR3=9400;
 			TIM3->CCR4=9400;
@@ -117,7 +130,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			TIM4->CCR3=0; //RIGHT FRONT WHEEL
 			TIM4->CCR4=9400;
 
-			TIM2->CCR1=0;
+			TIM9->CCR1=0;
 			TIM3->CCR2=0;
 			TIM3->CCR3=0;
 			TIM3->CCR4=0;
@@ -129,7 +142,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			TIM4->CCR3=9400;
 			TIM4->CCR4=0; //LEFT FRONT WHEEL
 
-			TIM2->CCR1=0;
+			TIM9->CCR1=0;
 			TIM3->CCR2=0;
 			TIM3->CCR3=0;
 			TIM3->CCR4=0;
@@ -147,7 +160,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			 TIM4->CCR3=0;
 			 TIM4->CCR4=0;
 
-			 TIM2->CCR1=0;
+			 TIM9->CCR1=0;
 			 TIM3->CCR2=0;
 			 TIM3->CCR3=0;
 			 TIM3->CCR4=0;
@@ -182,7 +195,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
+
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -209,6 +222,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_I2C2_Init();
+  MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim4);
 
@@ -234,16 +248,24 @@ int main(void)
   ov9655_config(OV9655_MODE_QVGA_RGB565);
   //ov9655_startCap(capMode, destAddress);
 
+  //HC-SR04
+  HCSR04_Init(&htim2);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  //HC-SR04
+	  HCSR04_Read(&distance);
+	  distance_len = sprintf(distance_buf, "%d", distance);
+	  HAL_UART_Transmit(&huart3, (uint8_t*)distance_buf, distance_len, 20);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  //HC-SR04
+	  HAL_Delay(20);
   }
   /* USER CODE END 3 */
 }
@@ -257,11 +279,11 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
@@ -275,7 +297,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -372,15 +394,16 @@ static void MX_TIM2_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM2_Init 1 */
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 9;
+  htim2.Init.Prescaler = 47;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9400;
+  htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -389,6 +412,10 @@ static void MX_TIM2_Init(void)
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
   if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_IC_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -402,11 +429,25 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+  if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -556,6 +597,58 @@ static void MX_TIM4_Init(void)
 }
 
 /**
+  * @brief TIM9 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM9_Init(void)
+{
+
+  /* USER CODE BEGIN TIM9_Init 0 */
+
+  /* USER CODE END TIM9_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM9_Init 1 */
+
+  /* USER CODE END TIM9_Init 1 */
+  htim9.Instance = TIM9;
+  htim9.Init.Prescaler = 9;
+  htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim9.Init.Period = 9400;
+  htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim9) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim9, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim9) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM9_Init 2 */
+
+  /* USER CODE END TIM9_Init 2 */
+  HAL_TIM_MspPostInit(&htim9);
+
+}
+
+/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -591,7 +684,7 @@ static void MX_USART3_UART_Init(void)
 /** 
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
