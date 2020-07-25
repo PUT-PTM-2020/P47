@@ -24,6 +24,7 @@
 #include "common.h"
 #include "ov9655/ov9655.h"
 #include "ov9655/ov9655Config.h"
+#include "dwt_delay.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -170,6 +171,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint32_t sensor_time;
+uint16_t dist;
+
+
+uint32_t hcsr04_read (void) {
+
+	uint32_t local_time = 0;
+
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+	DWT_Delay(10);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+
+	while(!(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2)));
+
+	while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2))
+	{
+		local_time++;
+		DWT_Delay(1);
+	}
+
+	return local_time*2;
+}
 
 /* USER CODE END 0 */
 
@@ -210,6 +233,7 @@ int main(void)
   MX_TIM3_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
+  DWT_Init();
   HAL_TIM_Base_Start_IT(&htim4);
 
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
@@ -240,7 +264,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  sensor_time = hcsr04_read();
+	  dist = sensor_time * .034/2;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -620,6 +645,22 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PA1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;
